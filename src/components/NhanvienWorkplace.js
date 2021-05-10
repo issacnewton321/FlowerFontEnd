@@ -83,7 +83,6 @@ function Admin_workplace({slide}){
                                 <th>GHI CHÚ</th>
                                 <th>ĐỊA CHỈ</th>
                                 <th>USERNAME</th>
-                                <th>PASSWORD</th>
                                 <th>DELETE</th>
                             </tr>
                         </thead>
@@ -109,7 +108,6 @@ function Admin_workplace({slide}){
                                        <td>{nv.ghichu}</td>
                                        <td>{nv.diachi}</td>
                                        <td>{nv.taikhoan?.username}</td>
-                                       <td>****</td>
                                        <td className="custom"><p className="custom-link" onClick={()=> getDeleteNV(nv.manv)}>Delete</p> </td>
                                     </tr>
                                 )

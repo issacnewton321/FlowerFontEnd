@@ -1,8 +1,9 @@
-import React,{useState,useEffect} from 'react'
+import React,{useState,useEffect,useContext} from 'react'
 import Detail_Portfolio from './Detail_Portfolio'
 import hoa from '../image/hoa4.jpg'
 import axios from 'axios'
 import {useHistory} from 'react-router-dom'
+import {UserContext} from '../context/UserContext'
 import './Cart.css'
 import emailjs from 'emailjs-com';
 export default function Cart(){
@@ -15,8 +16,18 @@ export default function Cart(){
             Authorization: 'Bearer ' + window.localStorage.getItem('jwt') //the token is a variable which holds the token
           }
       }
+      const [sl,setSl] = useContext(UserContext)
       const [cart,setCart] = useState([])
       const [sanpham,setSanpham] = useState([])
+      const getMaxSL = (masp)=>{
+        let sl = 0;
+        cart.forEach(c=>{
+            if(c.sanpham?.masp === masp){
+                sl = c.soluong;
+            }
+        })
+        return sl;
+    }
       let username = myStorage.getItem('username')
       useEffect(()=>{
           if(username == null)
@@ -27,7 +38,18 @@ export default function Cart(){
             .then(response => {
                 setUser(response.data)
                 axios.get(process.env.REACT_APP_API+`giohang/${response.data.makh}`,header)
-                .then(response => setCart(response.data))
+                .then(response => {
+                    setCart(response.data)
+                    const temp = response.data.map(sanph =>{
+                        return {
+                            masp :sanph.sanpham?.masp,
+                            soluong : sanph.soluong,
+                            dongia : sanph.sanpham?.dongia,
+                        }
+                    })
+                    
+                    setSanpham(temp)
+                })
                 .catch(erro =>console.log(erro))
                 
             })
@@ -50,7 +72,12 @@ export default function Cart(){
         axios.delete(process.env.REACT_APP_API+`giohang/${user.makh}/${masp}`,header)
         .then(response => 
             axios.get(process.env.REACT_APP_API+`giohang/${user.makh}`,header)
-            .then(response => setCart(response.data))
+            .then(response => {
+                setCart(response.data)
+                axios.get(process.env.REACT_APP_API +'numcart/'+user.makh,header)
+                .then(res => setSl(res.data))
+                .catch(err => console.log(err))
+            })
             .catch(erro =>console.log(erro))    
         )
         .catch(erro =>console.log(erro))
@@ -67,26 +94,36 @@ export default function Cart(){
                 }
             }
             else 
-                return s
+                return {...s}
         })
         setSanpham(newSP)
 
         axios.get(process.env.REACT_APP_API+`giohang/${user.makh}/${masp}?soluong=${num}`,header)
         .then(res =>{
             axios.get(process.env.REACT_APP_API+`giohang/${user.makh}`,header)
-                .then(response => setCart(response.data))
+                .then(response => {
+                    setCart(response.data)
+                    axios.get(process.env.REACT_APP_API +'numcart/'+user.makh,header)
+                    .then(res => setSl(res.data))
+                    .catch(err => console.log(err))
+                })
                 .catch(erro =>console.log(erro))
         })
         .catch(err => console.log(err))
 
       }
       const checkSP = (e,sp,soluong)=>{
-        sp.soluong = soluong
+
+
+            const mySP = {...sp,soluong:soluong}
+
+
           if(e.target.checked){
-                setSanpham([...sanpham,sp])
+                setSanpham([...sanpham,mySP])
+                
           }
           else{
-                setSanpham(sanpham.filter(s => s !== sp))
+                setSanpham(sanpham.filter(s => s.masp !== sp.masp))
           }
           //console.log(sanpham)
       }
@@ -114,7 +151,7 @@ export default function Cart(){
                 message:myMessage,
                 url:'https://scontent.fsgn5-7.fna.fbcdn.net/v/t1.6435-9/79771446_2469549519965437_8172007245870006272_n.jpg?_nc_cat=103&ccb=1-3&_nc_sid=09cbfe&_nc_ohc=pLCmJOHT02EAX9MvKRe&_nc_ht=scontent.fsgn5-7.fna&oh=fc6dd68ebb012af9470ac03ddc02817c&oe=60B45DDC',
                 notes: 'Check this out!',
-                email:'hongquan080799@gmail.com'
+                email:user?.email
             };
              
             emailjs.send('service_c4h4x3s', 'template_iy1y5te', templateParams,'user_eXT3mcACRHWvnrHkCZPaZ')
@@ -123,7 +160,7 @@ export default function Cart(){
                 }, function(error) {
                    console.log('FAILED...', error);
                 });
-        }
+        } 
       const order = ()=>{
         axios.post(process.env.REACT_APP_API+`donhang/${user.makh}`,sanpham,header)
         .then(res => {
@@ -136,6 +173,7 @@ export default function Cart(){
             .catch(erro =>console.log(erro))    })
         .catch(err => alert('Đặt hàng thất bại'))
       }
+
       const isInList= (masp)=>{
             return sanpham.some(sp => sp.masp === masp)
       }
@@ -196,9 +234,9 @@ export default function Cart(){
                                 <tr key={c.sanpham.masp}>
                                     <td onClick={()=> deleteCart(c.sanpham.masp)} className="deleteCart">&#10005;</td>
                                     <td><img src={c.sanpham.photo} alt="picture" style={{width:"70px",marginRight:"30px"}} /> {c.sanpham.tensp}</td>
-                                    <td style={{width:"15%"}}><input type="number" className="form-control" min="1" defaultValue={c.soluong} onClick={(e)=>changeNum(e,c.sanpham)} /></td>
+                                    <td style={{width:"15%"}}><input type="number" className="form-control" min="1" max={c.sanpham.soluong} defaultValue={c.soluong} onClick={(e)=>changeNum(e,c.sanpham)} /></td>
                                     <td><p className="text-danger">{c.sanpham.dongia * c.soluong} đ</p></td>
-                                    <td><input type="checkbox" className="form-check-input" onClick={(e)=>checkSP(e,c.sanpham,c.soluong)}/></td>
+                                    <td><input type="checkbox" className="form-check-input" defaultChecked onClick={(e)=>checkSP(e,c.sanpham,c.soluong)}/></td>
                                 </tr>
                             ))}
                         </table>
@@ -212,7 +250,7 @@ export default function Cart(){
                             <h4>{total} đ</h4>
                         </div>
                         
-                        {sanpham.length>0?<button className="btn btn-success btn-lg mt-4" data-toggle="modal" data-target="#exampleModal">ORDER NOW</button>:''}
+                        {sanpham.length>0?<button className="btn btn-success btn-lg mt-4" data-toggle="modal" data-target="#exampleModal">Đặt hàng</button>:''}
                           <div className="modal fade" id="exampleModal" tabIndex={-1} role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                               <div className="modal-dialog modal-lg" role="document">
                                 <div className="modal-content">

@@ -1,6 +1,8 @@
 import React,{useState,useEffect} from 'react'
 import SanphamWorkplace from './SanphamWorkplace'
 import DanhMucWorkplace from './DanhMucWorkplace'
+import Donhang from './Donhang_workplace'
+import axios from 'axios'
 import {
     BrowserRouter as Router,
     Switch,
@@ -13,13 +15,35 @@ import {
 
 
 function Nhanvien(){
-    let myStore = window.localStorage
-    let quyen = myStore.getItem('quyen')
-    let history = useHistory();
+    const [user,setUser] = useState(null);
+    const [donhang,setDonhang] = useState([])
+    const myStore = window.localStorage;
+    const quyen = myStore.getItem('quyen')
+    const jwt = myStore.getItem('jwt')
+    const [find,setFind] = useState('');
+    const header = {
+        headers: {
+            Authorization: 'Bearer ' + jwt //the token is a variable which holds the token
+          }
+    }
+    const history = useHistory()
+    const username = myStore.getItem('username')
     useEffect(()=>{
         if(quyen != 3)
             history.push('/')
-    })
+        if(username)
+        {
+          axios.get(process.env.REACT_APP_API +'nhanvien/'+username,header)
+        .then(response => {
+          
+          setUser(response.data) ; 
+        })
+        .catch(error => console.log(error))  
+        }
+        else{
+            history.push("/")
+        }
+    },[])
     
     
     let {nhanvienPage} = useParams();
@@ -38,10 +62,10 @@ function Nhanvien(){
             Page = <DanhMucWorkplace slide={slide}/>
             break;
         }
-        // case 'donhang':{
-        //     Page = <D slide={slide}/>
-        //     break;
-        // }
+        case 'donhang':{
+            Page = <Donhang slide={slide} user={user}/>
+            break;
+        }
     }
     return(
         <div>
@@ -55,14 +79,12 @@ function Nhanvien(){
                         <div className="employee-image">
                             <i className="fa fa-user-circle" aria-hidden="true"></i>
                         </div>
-                        <h4 className="employee-name">Trần Hồng Quân</h4>
+                        <h4 className="employee-name">{user?.ho + ' ' + user?.ten}</h4>
                     </div>
                     <div className={slide?"slide-bar_list":"slide-bar_list on-off-menu"}>
-                        <Link to="/admin/sanpham"><p><i className="fa fa-list-alt" aria-hidden="true"></i><span className="ml-2" >Danh sách sản phẩm</span></p></Link>
-                        <Link to="/admin/danhmuc"><p><i className="fa fa-users" aria-hidden="true"></i><span className="ml-2">Danh sách danh mục</span></p></Link>
-                        <Link to="/admin/khachhang"><p><i className="fa fa-calendar-check-o" aria-hidden="true"></i><span className="ml-2">Danh sách khách hàng</span></p></Link>
-                        <Link to="/admin/nhanvien"><p><i className="fa fa-calendar" aria-hidden="true"></i><span className="ml-2">Danh sách nhân viên</span></p></Link>
-                        <Link to="/admin/sanpham"><p><i className="fa fa-sign-out" aria-hidden="true"></i><span className="ml-2">Thoát</span></p></Link>
+                        <Link to="/nhanvien/sanpham"><p><i className="fa fa-list-alt" aria-hidden="true"></i><span className="ml-2" >Danh sách sản phẩm</span></p></Link>
+                        <Link to="/nhanvien/danhmuc"><p><i className="fa fa-users" aria-hidden="true"></i><span className="ml-2">Danh sách danh mục</span></p></Link>
+                        <Link to="/nhanvien/donhang"><p><i className="fa fa-calendar-check-o" aria-hidden="true"></i><span className="ml-2">Danh sách đơn hàng</span></p></Link>
                     </div>
                     
                 </div>

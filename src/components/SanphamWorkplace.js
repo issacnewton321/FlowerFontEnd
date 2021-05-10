@@ -41,7 +41,7 @@ function Admin_workplace({slide}){
         if(onUpdate){
             console.log("update")
             console.log(fileUrl)
-            axios.put(process.env.REACT_APP_API +'sanpham',myAlterData)
+            axios.put(process.env.REACT_APP_API +'sanpham',myAlterData,{headers:{contentType: "application/json; charset=utf-8"}})
             .then(response =>{
                 console.log(response)
                 setOn(!on)

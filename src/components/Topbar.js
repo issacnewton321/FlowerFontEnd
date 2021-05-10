@@ -1,6 +1,7 @@
 import { Grid } from '@material-ui/core'
-import React,{useState,useEffect} from 'react'
+import React,{useState,useEffect,useContext} from 'react'
 import './Topbar.css'
+import {UserContext} from '../context/UserContext'
 import axios from 'axios'
 import MessengerCustomerChat from 'react-messenger-customer-chat';
 import {
@@ -11,7 +12,9 @@ import {
     useHistory,
     Redirect
   } from "react-router-dom";
+import { get } from 'react-hook-form';
 function Topbar(){
+    const [sl,setSl] = useContext(UserContext)
     const [user,setUser] = useState(null);
     const [userUpdate,setUserUpdate] = useState(null)
     let history = useHistory();
@@ -39,9 +42,20 @@ function Topbar(){
     }
     useEffect(()=>{
         if(username)
-        axios.get(process.env.REACT_APP_API +'khachhang/'+username,header)
-        .then(response => {setUser(response.data) ; initialUserUpdate(response.data)})
-        .catch(error => console.log(error))
+        {
+          axios.get(process.env.REACT_APP_API +'khachhang/'+username,header)
+        .then(response => {
+          axios.get(process.env.REACT_APP_API +'numcart/'+response.data.makh,header)
+          .then(res => setSl(res.data))
+          .catch(err => console.log(err))
+
+          setUser(response.data) ; 
+          initialUserUpdate(response.data)
+        })
+        .catch(error => console.log(error))  
+
+        
+        }
     },[])
     const isLogin = ()=>{
         if(user!=null){
@@ -51,7 +65,7 @@ function Topbar(){
                     {open?
                         <div class="myAccount" style={{zIndex:1}}>
                             <p data-toggle="modal" data-target="#accountInfo"><i class="fa fa-user" aria-hidden="true"></i> Thông tin tài khoản</p>
-                            <p><i class="fa fa-shopping-bag" aria-hidden="true"></i> Đơn hàng của tôi</p>
+                            <p onClick={()=> history.push('/viewOrder')}><i class="fa fa-shopping-bag" aria-hidden="true"></i> Đơn hàng của tôi</p>
                         </div> :''  
                      }
                 </div>
@@ -83,6 +97,7 @@ function Topbar(){
         .then(response => alert('Sửa thành công'))
         .catch(error => console.log(error))
     }
+      
     return (
         <div>
             <MessengerCustomerChat
@@ -98,7 +113,7 @@ function Topbar(){
                     <div className='topbar__more d-flex'>
                         {isLogin()}
                         <Link to='/cart'>
-                         <p className="cart item mr-3"><i className="fa fa-shopping-cart fa-lg" aria-hidden="true"></i><span className='index'>1</span> Giỏ hàng</p>
+                         <p className="cart item mr-3"><i className="fa fa-shopping-cart fa-lg" aria-hidden="true"></i>{username?<span className='index'>{sl}</span>:''} Giỏ hàng</p>
                         </Link>
                         <p className="login item"><i className="fa fa-bell fa-lg"></i><span className='index'>1</span> Thông báo</p>
                         {isLogout()}
@@ -184,6 +199,7 @@ function Topbar(){
                   </div>
                 </div>
               </div>
+            
         </div>
     )
 

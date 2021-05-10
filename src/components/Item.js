@@ -1,5 +1,6 @@
-import React,{useState,useEffect} from 'react'
+import React,{useState,useEffect,useContext} from 'react'
 import hoa from '../image/hoa4.jpg'
+import {UserContext} from '../context/UserContext'
 import './Item.css'
 import {
   BrowserRouter as Router,
@@ -14,7 +15,7 @@ export default function Item ({product}){
   let myStorage = window.localStorage;
   const [user,setUser] = useState({})
   let username = myStorage.getItem('username')
-
+  const [sl,setSl] = useContext(UserContext)
   const header = {
     headers: {
         Authorization: 'Bearer ' + window.localStorage.getItem('jwt') //the token is a variable which holds the token
@@ -31,7 +32,12 @@ export default function Item ({product}){
     }
     else{
       axios.post(process.env.REACT_APP_API+`giohang/${user.makh}/${masp}?soluong=1`,{},header)
-    .then(Response => alert('Thêm thành công !!!'))
+    .then(Response => {
+      alert('Thêm thành công !!!')
+      axios.get(process.env.REACT_APP_API +'numcart/'+user.makh,header)
+      .then(res => setSl(res.data))
+      .catch(err => console.log(err))
+    })
     .catch(error => {alert('Thêm thất bại ' + error);console.log(error)})
     }
   }

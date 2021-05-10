@@ -55,7 +55,6 @@ function Admin_workplace({slide}){
                                 <th>EMAIL</th>
                                 <th>GIỚI TÍNH</th>
                                 <th>USERNAME</th>
-                                <th>PASSWORD</th>
                                 <th>DELETE</th>
                             </tr>
                         </thead>
@@ -80,7 +79,6 @@ function Admin_workplace({slide}){
                                        <td>{kh.email}</td>
                                        <td>{gender()}</td>
                                        <td>{kh.taikhoan?.username}</td>
-                                       <td>****</td>
                                        <td className="custom"><p className="custom-link" onClick={()=> getDeleteKH(kh.taikhoan.matk)}>Delete</p> </td>
                                     </tr>
                                 )

@@ -1,8 +1,10 @@
 import React,{useState,useEffect} from 'react'
 import axios from 'axios'
+import {useParams} from 'react-router-dom'
 import './SanphamWorkplace.css'
 function Donhang_workplace
-({slide}){
+({slide,user}){
+    const {quyen} = useParams()
     const [on,setOn] = useState(false)
     const [input,setInput] = useState({})
     const header = {
@@ -16,6 +18,7 @@ function Donhang_workplace
         axios.get(process.env.REACT_APP_API+'donhang/',header)
         .then(response => setDonhang(response.data))
         .catch(erro => console.log(erro))
+
     },[])
     const getDeleteDH = (madh)=>{
         let agree = window.confirm(`Bạn có muốn xóa madh = ${madh}?`);
@@ -64,6 +67,24 @@ function Donhang_workplace
       const {value} = e.target
       setSearch(value)
     }
+    const changeTT = (e,dh)=>{
+      if(window.confirm('Bạn có muốn thay đổi trạng thái đơn hàng'))
+      {
+        const {value} = e.target
+      dh.trangthai = value
+      dh.nhanvien = user
+      axios.put(process.env.REACT_APP_API+'donhang/',dh,header)
+      .then(res => 
+        axios.get(process.env.REACT_APP_API+'donhang/',header)
+        .then(response => setDonhang(response.data))
+        .catch(erro => console.log(erro))
+        )
+      .catch(err => console.log(err))
+      }
+      else{
+        window.location.reload();
+      }
+    }
     return(
         <div className={slide?"workplace":"on-off-workplace"}>
                 <h3 className={!on?"form-head":"d-none"}>DANH SÁCH ĐƠN HÀNG</h3>  
@@ -78,19 +99,23 @@ function Donhang_workplace
                             <tr>
                                 <th>MÃ ĐƠN HÀNG</th>
                                 <th>TỔNG TIỀN</th>
-                                <th>NGAỲ ĐẶT</th>
+                                <th>NGÀY ĐẶT</th>
                                 <th>TRẠNG THÁI</th>
                                 <th>HÌNH THỨC THANH TOÁN</th>
                                 <th>MÃ NHÂN VIÊN</th>
                                 <th>TÊN NHÂN VIÊN</th>
                                 <th>MÃ KHÁCH HÀNG</th>
                                 <th>TÊN KHÁCH HÀNG</th>
-                                <th>DELETE</th>
                                 <th>XEM CHI TIẾT</th>
                             </tr>
                         </thead>
                         <tbody>
                             {donhang.map(dh =>{
+                              let tt = '';
+                              if(dh.trangthai == 4)
+                                tt = 'Đã Hủy'
+                              else if(dh.trangthai == 3)
+                               tt = 'Đã giao hàng'
                               if(dh.madh.toLowerCase().includes(search.toLowerCase()))
                                 return (
                                     <tr key={dh.madh}>
@@ -98,18 +123,24 @@ function Donhang_workplace
                                        <td>{dh.tongtien}</td>
                                        <td>{dh.ngaydat}</td>
                                        <td>
-                                           <select className="custom-select my-1 mr-sm-2" value={dh.trangthai}>
-                                             <option value={0}>Chờ xử lý</option>
-                                             <option value={1}>Đã xác nhận</option>
-                                             <option value={3}>Hủy</option>
-                                           </select>
+                                           {tt == ''?
+                                            <select className="custom-select my-1 mr-sm-2" defaultValue={dh.trangthai} onChange={(e)=>changeTT(e,dh)}>
+                                                {dh.trangthai == 0 ?<option value={0}>Chờ xử lý</option>:''}
+                                                {dh.trangthai == 0 || dh.trangthai == 1 ?<option value={1}>Đã xác nhận</option>:''} 
+                                                {dh.trangthai == 0 || dh.trangthai == 1 || dh.trangthai ==2 ?<option value={2}>Đang gửi</option>:''} 
+                                                <option value={3}>Đã gửi</option>
+                                                <option value={4}>Đã hủy</option>
+                                                 
+                                            </select>:
+                                            <p className='text-secondary' style={{fontSize:18,fontStyle:'italic'}}>{tt}</p>
+                                            
+                                          }
                                        </td>
                                        <td>{dh.hinhthucthanhtoan==1?'Tiền mặt':'Thẻ'}</td>
                                        <td>{dh.nhanvien?.manv}</td>
                                        <td>{dh.nhanvien?dh.nhanvien?.ho + ' ' + dh.nhanvien?.ten : ''}</td>
                                        <td>{dh.khachhang?.makh}</td>
                                        <td>{dh.khachhang?.ho + ' ' + dh.khachhang?.ten}</td>
-                                       <td className="custom"><p className="custom-link" onClick={()=> getDeleteDH(dh.madh)}>Delete</p> </td>
                                        <td>
                                              <button type="button" className="btn btn-primary" data-toggle="modal" data-target={'#'+dh.madh}>
                                                    Xem

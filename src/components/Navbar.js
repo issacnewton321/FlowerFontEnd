@@ -19,6 +19,7 @@ function Navbar(){
     const [search,setSearch] = useState('')
     const [isSearch,setIsSearch] = useState(false)
     const [products,setProducts] = useState([])
+    
     useEffect(async()=>{
         try {
           const data = await axiosClient.get('sanpham',null);

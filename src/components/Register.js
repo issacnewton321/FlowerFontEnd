@@ -2,34 +2,54 @@ import React,{useState,useEffect,useContext} from 'react'
 import firebase,{auth} from '../firebase'
 import axios from 'axios'
 const Register = ()=>{
+    const [otp,setOtp] = useState();
+    const [isSubmit,setIsSubmit] = useState(false);
     const [input,setInput] = useState({})
     const handleSubmit = (e)=>{
         e.preventDefault();
         axios.get(process.env.REACT_APP_API+'IsUserExits/'+ input.username)
         .then(response => {alert('Đã tồn tại username này !!!'); return})
         .catch(erro => {
-            let recaptcha = new firebase.auth.RecaptchaVerifier('recaptcha-container').render()
-            window.appVerifier = new firebase.auth.RecaptchaVerifier(
-                "recaptcha-container"
-            );
-            const appVerifier = window.appVerifier;
-        
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                'size': 'normal',
+                'callback': (response) => {
+                  // reCAPTCHA solved, allow signInWithPhoneNumber.
+                      //setIsSubmit(true)
+                      onVerify();
+                 
+                },
+                'expired-callback':()=>{
+                    //  window.recaptchaVerifier.clear(); 
+                }
+              });
+            
+              window.recaptchaVerifier.render();
+        })
+    }
+    const onRegister = ()=>{
+
+    }
+    const onVerify= (recapcha)=>{
+  
+         const appVerifier = window.recaptchaVerifier
             let number = '+84'+ Number(input.sdt)
-            auth.signInWithPhoneNumber(number,appVerifier).then(e=>{
-                let code = window.prompt('Nhap otp ');
-                e.confirm(code).then(result=>{
-                    window.appVerifier.clear()
-                    window.alert('OTP hợp lệ\n Kiểm tra email để kích hoạt tài khoản')
-                    sendEmail();
+            auth.signInWithPhoneNumber(number,appVerifier)
+            .then(e=>{
+                let code = window.prompt('Nhập mã otp đã gửi');
+                e.confirm(code)
+                .then(res =>{
+                    axios.post(process.env.REACT_APP_API +'register',input)
+                    .then(response => window.alert('Đăng ký thành công'))
+                    .catch(error => window.alert('Đăng ký thất bại'))
                 })
-                .catch(error=> {
-                    window.appVerifier.clear()
-                    window.alert('OTP không hợp lệ đồ ngốc ạ !!!')
+                .catch(err=>{
+                    window.alert('Đăng ký thất bại')
                 })
             })
-            .catch(error=> console.log(error))
-            })
-    
+            //sendEmail();
+           // window.appVerifier.clear()
+          //  window.appVerifier.clear()
+            
     }
     const sendEmail=()=>{
         let secretKey = Math.floor(Math.random() * 100000) + 1 //
@@ -37,7 +57,7 @@ const Register = ()=>{
                
                 // URL you want to redirect back to. The domain (www.example.com) for this
                 // URL must be in the authorized domains list in the Firebase Console.
-                url: 'http://localhost:3000/activate/',
+                url: 'https://hongquan-c16c6.web.app/'+'activate/',
                 // This must be true.
                 handleCodeInApp: true
               };
@@ -66,6 +86,7 @@ const Register = ()=>{
     }
     return (
         <div className="container mt-4">
+            {!isSubmit?
             <div className="card" style={{width: '100%'}}>
                 <div className="card-header bg-success text-white">THÔNG TIN ĐĂNG KÝ TÀI KHOẢN</div>
               <div className="card-body">
@@ -94,7 +115,15 @@ const Register = ()=>{
                     <button type="reset" className="btn btn-info">LÀM MỚI</button>
                 </form>
               </div>
+            </div>:
+            <div>
+                <h5>Xác thực OTP</h5>
+                <div className="form-inline">
+                <input type="text" className="form-control mr-2" placeholder="Nhập otp đã gửi" onChange={(e)=>setOtp(e.target.value)}/>
+                <button className="btn btn-primary" type="button" onClick={onRegister}>Đăng ký</button>
             </div>
+            </div>
+            }
         </div>
     )
 };

@@ -14,6 +14,7 @@ import Register from './components/Register'
 import Activate from './components/Activate'
 import Nhanvien from './components/Nhanvien'
 import {UserProvider} from './context/UserContext'
+import ViewOrder from './components/ViewOrder'
 import {
   BrowserRouter as Router,
   Switch,
@@ -72,6 +73,14 @@ function App() {
         <Route path="/login" exact>
           <Header />
           <Login />
+          <About />
+          <Commit />
+          <Bottom />
+          
+        </Route>
+        <Route path="/viewOrder" exact>
+          <Header />
+          <ViewOrder />
           <About />
           <Commit />
           <Bottom />
